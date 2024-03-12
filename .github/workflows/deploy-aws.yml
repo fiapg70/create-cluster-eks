@@ -38,9 +38,3 @@ jobs:
       - name: Aplicar Configuração Terraform
         run: terraform apply -auto-approve
         working-directory: ${{ github.workspace }}
-
-      - name: Implantação no Cluster EKS
-        run: |
-          kubectl apply -f main.tf
-        working-directory: ${{ github.workspace }}
-
