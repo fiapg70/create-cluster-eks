@@ -1,4 +1,4 @@
-name: CI/CD para cluster EKS
+name: CI/CD para AWS EKS
 
 on:
   push:
@@ -11,10 +11,14 @@ jobs:
 
     steps:
       - name: Checkout do código
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
 
       - name: Configurar AWS CLI
+        uses: aws-actions/configure-aws-credentials@v2
+
+      - name: Configurar AWS CLI e contexto do cluster EKS
         uses: aws-actions/configure-aws-credentials@v1
+
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -24,26 +28,23 @@ jobs:
       - name: Instalar Terraform
         uses: hashicorp/setup-terraform@v1
         with:
-          terraform_version: 1.1.0
+          terraform_version: 1.2.0
 
-      - name: Inicializar Terraform
-        run: terraform init
-        working-directory: ${{ github.workspace }}
-
-      - name: Planificar Configuração Terraform
-        run: terraform plan
-        working-directory: ${{ github.workspace }}
-
-      - name: Aplicar Configuração Terraform
-        run: terraform apply -auto-approve
-        working-directory: ${{ github.workspace }}
+      - name: Construir e enviar imagem Docker
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: marrani/sevenfood-api:latest
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Configurar kubectl
         run: |
-          aws eks --region us-east-1 update-kubeconfig --name sevenfood-eks
-        working-directory: ${{ github.workspace }}
+          aws eks --region us-east-1 update-kubeconfig --name sevenfood
 
-      - name: Criar Namespace no Kubernetes
+      - name: Implantação da API no Cluster EKS
         run: |
-          kubectl create namespace postech-soat
+          kubectl apply -f infra/k8s/api/ -n postech-soat
         working-directory: ${{ github.workspace }}
