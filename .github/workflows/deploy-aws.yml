@@ -21,7 +21,6 @@ jobs:
           aws-region: us-east-1
           role-duration-seconds: 1200
 
-
       - name: Instalar Terraform
         uses: hashicorp/setup-terraform@v1
         with:
@@ -39,8 +38,13 @@ jobs:
         run: terraform apply -auto-approve
         working-directory: ${{ github.workspace }}
 
-      - name: Implantação no Cluster EKS
+      - name: Configurar kubectl
         run: |
-          kubectl apply -f main.tf
+          CLUSTER_NAME=$(terraform output -raw cluster_name)
+          aws eks --region us-east-1 update-kubeconfig --name "$CLUSTER_NAME"
         working-directory: ${{ github.workspace }}
 
+      - name: Criar Namespace no Kubernetes
+        run: |
+          kubectl create namespace postech-soat
+        working-directory: ${{ github.workspace }}
