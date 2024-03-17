@@ -31,6 +31,10 @@ jobs:
         run: terraform init
         working-directory: ${{ github.workspace }}
 
+      - name: Destruir Configuração Terraform
+        run: terraform destroy -auto-approve
+        working-directory: ${{ github.workspace }}
+
       - name: Planificar Configuração Terraform
         run: terraform plan
         working-directory: ${{ github.workspace }}

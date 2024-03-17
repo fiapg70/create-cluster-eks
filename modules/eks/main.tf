@@ -77,9 +77,6 @@ resource "aws_iam_role" "sevenfood" {
   ]
 }
 POLICY
-  lifecycle {
-    create_before_destroy = true
-  }
 }
 
 resource "aws_iam_role_policy_attachment" "sevenfood-AmazonEKSClusterPolicy" {
@@ -92,9 +89,6 @@ resource "aws_iam_role_policy_attachment" "sevenfood-AmazonEKSClusterPolicy" {
 resource "aws_iam_role_policy_attachment" "sevenfood-AmazonEKSVPCResourceController" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSVPCResourceController"
   role       = aws_iam_role.sevenfood.name
-  lifecycle {
-    create_before_destroy = true
-  }
 }
 
 resource "aws_iam_role" "sevenfood2" {
@@ -110,9 +104,6 @@ resource "aws_iam_role" "sevenfood2" {
     }]
     Version = "2012-10-17"
   })
-  lifecycle {
-    create_before_destroy = true
-  }
 }
 
 resource "aws_iam_role_policy_attachment" "sevenfood-AmazonEKSWorkerNodePolicy" {
