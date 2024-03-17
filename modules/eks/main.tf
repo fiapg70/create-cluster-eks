@@ -120,9 +120,3 @@ resource "aws_iam_role_policy_attachment" "sevenfood-AmazonEC2ContainerRegistryR
   policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
   role       = aws_iam_role.sevenfood2.name
 }
-
-resource "kubernetes_namespace" "postech-soat" {
-  metadata {
-    name = "postech-soat"
-  }
-}
