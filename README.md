@@ -60,3 +60,6 @@ Initialize the Terraform working directory:
 
 ```sh
 terraform init
+terraform plan
+terraform apply
+terraform destroy
