@@ -1,4 +1,6 @@
-resource "aws_eks_cluster" "sevenfood-eks" {
+# main.tf
+
+resource "aws_eks_cluster" "sevenfood_eks" {
   name     = var.cluster_name
   role_arn = aws_iam_role.sevenfood.arn
 
@@ -11,13 +13,13 @@ resource "aws_eks_cluster" "sevenfood-eks" {
   }
 
   depends_on = [
-    aws_iam_role_policy_attachment.sevenfood-AmazonEKSClusterPolicy,
-    aws_iam_role_policy_attachment.sevenfood-AmazonEKSVPCResourceController,
+    aws_iam_role_policy_attachment.sevenfood_AmazonEKSClusterPolicy,
+    aws_iam_role_policy_attachment.sevenfood_AmazonEKSVPCResourceController,
   ]
 }
 
-resource "aws_eks_node_group" "sevenfood-eks" {
-  cluster_name    = aws_eks_cluster.sevenfood-eks.name
+resource "aws_eks_node_group" "sevenfood_eks" {
+  cluster_name    = aws_eks_cluster.sevenfood_eks.name
   node_group_name = var.node_group_name
   node_role_arn   = aws_iam_role.sevenfood2.arn
   subnet_ids      = var.aws_public_subnet
@@ -35,9 +37,9 @@ resource "aws_eks_node_group" "sevenfood-eks" {
   }
 
   depends_on = [
-    aws_iam_role_policy_attachment.sevenfood-AmazonEKSWorkerNodePolicy,
-    aws_iam_role_policy_attachment.sevenfood-AmazonEKS_CNI_Policy,
-    aws_iam_role_policy_attachment.sevenfood-AmazonEC2ContainerRegistryReadOnly,
+    aws_iam_role_policy_attachment.sevenfood_AmazonEKSWorkerNodePolicy,
+    aws_iam_role_policy_attachment.sevenfood_AmazonEKS_CNI_Policy,
+    aws_iam_role_policy_attachment.sevenfood_AmazonEC2ContainerRegistryReadOnly,
   ]
 }
 
@@ -79,14 +81,14 @@ resource "aws_iam_role" "sevenfood" {
 POLICY
 }
 
-resource "aws_iam_role_policy_attachment" "sevenfood-AmazonEKSClusterPolicy" {
+resource "aws_iam_role_policy_attachment" "sevenfood_AmazonEKSClusterPolicy" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"
   role       = aws_iam_role.sevenfood.name
 }
 
 # Optionally, enable Security Groups for Pods
 # Reference: https://docs.aws.amazon.com/eks/latest/userguide/security-groups-for-pods.html
-resource "aws_iam_role_policy_attachment" "sevenfood-AmazonEKSVPCResourceController" {
+resource "aws_iam_role_policy_attachment" "sevenfood_AmazonEKSVPCResourceController" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSVPCResourceController"
   role       = aws_iam_role.sevenfood.name
 }
@@ -96,8 +98,8 @@ resource "aws_iam_role" "sevenfood2" {
 
   assume_role_policy = jsonencode({
     Statement = [{
-      Action = "sts:AssumeRole"
-      Effect = "Allow"
+      Action    = "sts:AssumeRole"
+      Effect    = "Allow"
       Principal = {
         Service = "ec2.amazonaws.com"
       }
@@ -106,17 +108,17 @@ resource "aws_iam_role" "sevenfood2" {
   })
 }
 
-resource "aws_iam_role_policy_attachment" "sevenfood-AmazonEKSWorkerNodePolicy" {
+resource "aws_iam_role_policy_attachment" "sevenfood_AmazonEKSWorkerNodePolicy" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"
   role       = aws_iam_role.sevenfood2.name
 }
 
-resource "aws_iam_role_policy_attachment" "sevenfood-AmazonEKS_CNI_Policy" {
+resource "aws_iam_role_policy_attachment" "sevenfood_AmazonEKS_CNI_Policy" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
   role       = aws_iam_role.sevenfood2.name
 }
 
-resource "aws_iam_role_policy_attachment" "sevenfood-AmazonEC2ContainerRegistryReadOnly" {
+resource "aws_iam_role_policy_attachment" "sevenfood_AmazonEC2ContainerRegistryReadOnly" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
   role       = aws_iam_role.sevenfood2.name
 }
