@@ -61,7 +61,7 @@ resource "aws_security_group" "node_group_one" {
 }
 
 resource "aws_iam_role" "sevenfood" {
-  name = "eks-cluster-sevenfood"
+  name = "eks-cluster-sevenfood-v5"
 
   assume_role_policy = <<POLICY
 {
@@ -92,7 +92,7 @@ resource "aws_iam_role_policy_attachment" "sevenfood-AmazonEKSVPCResourceControl
 }
 
 resource "aws_iam_role" "sevenfood2" {
-  name = "eks-node-group-sevenfood"
+  name = "eks-node-group-sevenfood-v5"
 
   assume_role_policy = jsonencode({
     Statement = [{
