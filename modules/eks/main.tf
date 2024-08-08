@@ -1,5 +1,3 @@
-# main.tf
-
 resource "aws_eks_cluster" "sevenfood_eks" {
   name     = var.cluster_name
   role_arn = aws_iam_role.sevenfood.arn
@@ -51,9 +49,9 @@ resource "aws_security_group" "node_group_one" {
     from_port = 80
     to_port   = 80
     protocol  = "tcp"
-
     cidr_blocks = ["0.0.0.0/0"]
   }
+
   egress {
     from_port   = 0
     to_port     = 0
@@ -86,8 +84,6 @@ resource "aws_iam_role_policy_attachment" "sevenfood_AmazonEKSClusterPolicy" {
   role       = aws_iam_role.sevenfood.name
 }
 
-# Optionally, enable Security Groups for Pods
-# Reference: https://docs.aws.amazon.com/eks/latest/userguide/security-groups-for-pods.html
 resource "aws_iam_role_policy_attachment" "sevenfood_AmazonEKSVPCResourceController" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSVPCResourceController"
   role       = aws_iam_role.sevenfood.name
