@@ -1,29 +1,122 @@
+# main.tf
 
-module "eks" {
-  source                  = "./modules/eks"
-  aws_public_subnet       = module.vpc.aws_public_subnet
-  vpc_id                  = module.vpc.vpc_id
-  cluster_name            = "sevenfood-eks"
-  endpoint_public_access  = true
-  endpoint_private_access = false
-  public_access_cidrs     = ["0.0.0.0/0"]
-  node_group_name         = "fiap-postech"
-  scaling_desired_size    = 1
-  scaling_max_size        = 1
-  scaling_min_size        = 1
-  instance_types          = ["t3.small"]
-  key_pair                = "fiapPostech"
+resource "aws_eks_cluster" "sevenfood-eks" {
+  name     = var.cluster_name
+  role_arn = aws_iam_role.sevenfood.arn
+
+  vpc_config {
+    subnet_ids              = var.aws_public_subnet
+    endpoint_public_access  = var.endpoint_public_access
+    endpoint_private_access = var.endpoint_private_access
+    public_access_cidrs     = var.public_access_cidrs
+    security_group_ids      = [aws_security_group.node_group_one.id]
+  }
+
+  depends_on = [
+    aws_iam_role_policy_attachment.sevenfood-AmazonEKSClusterPolicy,
+    aws_iam_role_policy_attachment.sevenfood-AmazonEKSVPCResourceController,
+  ]
 }
 
-module "vpc" {
-  source                  = "./modules/vpc"
-  tags                    = "sevenfood"
-  instance_tenancy        = "default"
-  vpc_cidr                = "10.0.0.0/16"
-  access_ip               = "0.0.0.0/0"
-  public_sn_count         = 2
-  public_cidrs            = ["10.0.1.0/24", "10.0.2.0/24"]
-  map_public_ip_on_launch = true
-  rt_route_cidr_block     = "0.0.0.0/0"
+resource "aws_eks_node_group" "sevenfood-eks" {
+  cluster_name    = aws_eks_cluster.sevenfood-eks.name
+  node_group_name = var.node_group_name
+  node_role_arn   = aws_iam_role.sevenfood2.arn
+  subnet_ids      = var.aws_public_subnet
+  instance_types  = var.instance_types
 
+  remote_access {
+    source_security_group_ids = [aws_security_group.node_group_one.id]
+    ec2_ssh_key               = var.key_pair
+  }
+
+  scaling_config {
+    desired_size = var.scaling_desired_size
+    max_size     = var.scaling_max_size
+    min_size     = var.scaling_min_size
+  }
+
+  depends_on = [
+    aws_iam_role_policy_attachment.sevenfood-AmazonEKSWorkerNodePolicy,
+    aws_iam_role_policy_attachment.sevenfood-AmazonEKS_CNI_Policy,
+    aws_iam_role_policy_attachment.sevenfood-AmazonEC2ContainerRegistryReadOnly,
+  ]
+}
+
+resource "aws_security_group" "node_group_one" {
+  name_prefix = "node_group_one"
+  vpc_id      = var.vpc_id
+
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+resource "aws_iam_role" "sevenfood" {
+  name = "eks-cluster-sevenfood-v5"
+
+  assume_role_policy = <<POLICY
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "Service": "eks.amazonaws.com"
+      },
+      "Action": "sts:AssumeRole"
+    }
+  ]
+}
+POLICY
+}
+
+resource "aws_iam_role_policy_attachment" "sevenfood-AmazonEKSClusterPolicy" {
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"
+  role       = aws_iam_role.sevenfood.name
+}
+
+resource "aws_iam_role_policy_attachment" "sevenfood-AmazonEKSVPCResourceController" {
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSVPCResourceController"
+  role       = aws_iam_role.sevenfood.name
+}
+
+resource "aws_iam_role" "sevenfood2" {
+  name = "eks-node-group-sevenfood-v5"
+
+  assume_role_policy = jsonencode({
+    Statement = [{
+      Action = "sts:AssumeRole"
+      Effect = "Allow"
+      Principal = {
+        Service = "ec2.amazonaws.com"
+      }
+    }]
+    Version = "2012-10-17"
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "sevenfood-AmazonEKSWorkerNodePolicy" {
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"
+  role       = aws_iam_role.sevenfood2.name
+}
+
+resource "aws_iam_role_policy_attachment" "sevenfood-AmazonEKS_CNI_Policy" {
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
+  role       = aws_iam_role.sevenfood2.name
+}
+
+resource "aws_iam_role_policy_attachment" "sevenfood-AmazonEC2ContainerRegistryReadOnly" {
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
+  role       = aws_iam_role.sevenfood2.name
 }
